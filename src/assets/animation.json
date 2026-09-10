@@ -1,0 +1,5 @@
+[
+  { "id": "animal-walk", "frames": 4, "durationMs": 600, "reducedMotion": "fade-relocate" },
+  { "id": "animal-idle", "frames": 2, "durationMs": 1200, "reducedMotion": "static" },
+  { "id": "couple-slide", "frames": 1, "durationMs": 500, "reducedMotion": "instant" }
+]
