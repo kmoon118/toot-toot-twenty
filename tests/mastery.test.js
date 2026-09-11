@@ -74,6 +74,6 @@ describe('unlockMet', () => {
         recentByRoute: {},
       },
     };
-    expect(maybeUnlock(save)).toBe(6);
+    expect(maybeUnlock(save)).toBe(11);
   });
 });

@@ -1,4 +1,5 @@
 import { packAnimals } from '../../game/pack.js';
+import { equationPartsFor, packSpecFor } from '../../game/ops/index.js';
 import { startTrip, applyCombine, applyAnswer, advance, currentProblem } from '../../game/session.js';
 import { recordCorrect } from '../storage/save.js';
 import { useStrip } from '../layoutMode.js';
@@ -6,11 +7,14 @@ import { features } from '../features.js';
 import { renderMuteButton } from '../../ui/MuteButton.js';
 import { renderFrame, pulseCell } from '../../ui/Frame.js';
 import { renderNumberChoices } from '../../ui/NumberChoices.js';
-import { ANSWER_LOCK_MS, AUTO_COUNT_MS, AUTO_COUNT_REDUCED_MS } from '../../game/hints.js';
+import { ANSWER_LOCK_MS, AUTO_COUNT_MS, AUTO_COUNT_REDUCED_MS, CELEBRATE_MS } from '../../game/hints.js';
 import { onActivate } from '../input/pointer.js';
 import { renderJourney, setJourneyProgress } from '../../ui/Journey.js';
+import { sceneryMarkup } from '../../ui/Scenery.js';
+import { burstCelebrate } from '../../ui/Celebrate.js';
+import { renderTrainImg } from '../../ui/Sprite.js';
 
-const CHUG_MS = 800;
+const CHUG_MS = CELEBRATE_MS;
 
 export function renderTripScreen(root, ctx, params) {
   const routeId = params.routeId || 1;
@@ -24,6 +28,7 @@ export function renderTripScreen(root, ctx, params) {
   let problemHost = null;
   let eqEl = null;
   let muteHost = null;
+  let screenEl = null;
 
   function progress() {
     if (session.tripDone) return 6;
@@ -86,9 +91,12 @@ export function renderTripScreen(root, ctx, params) {
     overlay.className = 'overlay';
     const card = document.createElement('div');
     card.className = 'card';
-    card.innerHTML = `<div style="font-size:40px">🚉</div>
-      <div>The train is here!</div>
-      <div>You win</div>`;
+    card.appendChild(renderTrainImg('win-train'));
+    const msg = document.createElement('div');
+    msg.textContent = 'The train is here!';
+    const win = document.createElement('div');
+    win.textContent = 'You win';
+    card.append(msg, win);
     const again = document.createElement('button');
     again.className = 'big-btn green';
     again.textContent = 'Another trip';
@@ -100,6 +108,87 @@ export function renderTripScreen(root, ctx, params) {
     card.append(again, mapBtn);
     overlay.appendChild(card);
     root.querySelector('.screen').appendChild(overlay);
+  }
+
+  function normalizeParts(raw) {
+    if (!raw || !raw.length) return null;
+    return raw.map((p) => {
+      if (p && typeof p === 'object' && !Array.isArray(p) && p.text != null) return p;
+      if (Array.isArray(p) && p.length >= 2) return { className: String(p[0]), text: String(p[1]) };
+      const text = String(p);
+      const isOp = ['+', '−', '-', '=', 'vs', '?', '◀', '▶'].includes(text);
+      return { className: isOp ? 'eq-op' : 'eq-num', text };
+    });
+  }
+
+  function packedFor(problem, celebrating) {
+    const spec = packSpecFor(problem);
+    if (!spec || !problem.op || problem.op === 'add') return packAnimals(problem.a, problem.b);
+    if (spec.kind === 'takeaway') {
+      const out = [];
+      for (let i = 0; i < spec.stay; i++) out.push({ species: 'A', cell: i, frame: 1 });
+      if (!celebrating) {
+        for (let i = 0; i < spec.leave; i++) {
+          out.push({ species: 'B', cell: spec.stay + i, frame: 1, leaving: true });
+        }
+      }
+      return out;
+    }
+    if (spec.kind === 'missing') {
+      const out = [];
+      for (let i = 0; i < spec.seated; i++) out.push({ species: 'A', cell: i, frame: 1 });
+      if (celebrating) {
+        for (let i = 0; i < spec.missing; i++) {
+          out.push({ species: 'A', cell: spec.seated + i, frame: 1 });
+        }
+      }
+      return out;
+    }
+    if (spec.kind === 'compare') {
+      const out = [];
+      for (let i = 0; i < spec.left; i++) out.push({ species: 'A', cell: i, frame: 1 });
+      for (let i = 0; i < spec.right; i++) out.push({ species: 'B', cell: 10 + i, frame: 2 });
+      return out;
+    }
+    if (spec.kind === 'bond') {
+      const out = [];
+      for (let i = 0; i < spec.a; i++) out.push({ species: 'A', cell: i, frame: 1 });
+      if (celebrating) {
+        for (let i = 0; i < spec.b; i++) out.push({ species: 'B', cell: spec.a + i, frame: 1 });
+      }
+      return out;
+    }
+    return packAnimals(problem.a, problem.b);
+  }
+
+  function paintEquation(problem) {
+    const celebrating = session.status === 'celebrating';
+    eqEl.classList.toggle('is-correct', celebrating);
+    eqEl.replaceChildren();
+    const custom = normalizeParts(equationPartsFor(problem, { celebrating }));
+    const parts = custom || [
+      { className: 'eq-num eq-a', text: String(problem.a) },
+      { className: 'eq-op', text: '+' },
+      { className: 'eq-num eq-b', text: String(problem.b) },
+      { className: 'eq-op', text: '=' },
+      { className: celebrating ? 'eq-sum is-reveal' : 'eq-sum', text: celebrating ? String(problem.answer ?? problem.sum) : '?' },
+    ];
+    for (const part of parts) {
+      const span = document.createElement('span');
+      span.className = part.className;
+      span.textContent = part.text;
+      eqEl.appendChild(span);
+    }
+  }
+
+  function playCorrectFx() {
+    ctx.audio.playSfx('cheer');
+    ctx.audio.playSfx('sparkle');
+    ctx.audio.playSfx('toot-short');
+    burstCelebrate(screenEl, { reduced: ctx.reduceMotion() });
+    problemHost?.querySelectorAll('.cell').forEach((cell) => {
+      if (cell.querySelector('.sprite')) cell.classList.add('is-cheer');
+    });
   }
 
   async function onChoose(n) {
@@ -119,14 +208,17 @@ export function renderTripScreen(root, ctx, params) {
       return;
     }
     persistCorrect(result);
-    ctx.audio.playSfx('toot-short');
-    ctx.audio.speakNumber(currentProblem(session).sum, 'sum');
+    const spoken = currentProblem(session);
+    if (typeof (spoken.answer ?? spoken.sum) === 'number') {
+      ctx.audio.speakNumber(spoken.answer ?? spoken.sum, 'sum');
+    }
     setJourneyProgress(journeyEl, progress());
     paintProblem();
-    const wait = ctx.reduceMotion() ? 350 : Math.max(CHUG_MS, 600);
+    playCorrectFx();
+    const wait = ctx.reduceMotion() ? 400 : Math.max(CHUG_MS, 700);
     window.setTimeout(() => {
       if (result.tripDone) {
-        ctx.audio.playSfx('cheer');
+        ctx.audio.playSfx('toot-long');
         youWin();
         return;
       }
@@ -148,7 +240,8 @@ export function renderTripScreen(root, ctx, params) {
     root.innerHTML = '';
     const screen = document.createElement('div');
     screen.className = 'screen';
-    screen.innerHTML = `<div class="sky"></div><div class="sun" aria-hidden="true"></div><div class="hill hill-left"></div><div class="hill hill-right"></div>`;
+    screen.innerHTML = sceneryMarkup();
+    screenEl = screen;
 
     const chrome = document.createElement('div');
     chrome.className = 'chrome';
@@ -192,18 +285,19 @@ export function renderTripScreen(root, ctx, params) {
         },
       }),
     );
-    eqEl.textContent = `${problem.a} + ${problem.b} = ?`;
+    paintEquation(problem);
 
     const strip = useStrip(problem, ctx.save.mastery, features, {
       width: window.innerWidth,
       height: window.innerHeight,
       layout: document.documentElement.dataset.layout || 'wide',
     });
-    const packed = packAnimals(problem.a, problem.b);
+    const packed = packedFor(problem, session.status === 'celebrating');
     problemHost.innerHTML = '';
     const row = document.createElement('div');
     row.className = 'frame-row';
     const frames = problem.frameCount === 2 ? [1, 2] : [1];
+    const emptySeats = problem.op === 'missing' || problem.op === 'bond';
     for (const id of frames) {
       row.appendChild(
         renderFrame({
@@ -212,6 +306,7 @@ export function renderTripScreen(root, ctx, params) {
           frameId: id,
           speciesA: problem.speciesA,
           speciesB: problem.speciesB,
+          emptySeats,
           onTapAnimal: (idx) => {
             counted.add(idx);
             ctx.audio.speakNumber(idx, 'count');
@@ -220,7 +315,7 @@ export function renderTripScreen(root, ctx, params) {
       );
     }
     problemHost.appendChild(row);
-    const halo = session.hintLevel >= 3 ? problem.sum : null;
+    const halo = session.hintLevel >= 3 ? (problem.answer ?? problem.sum) : null;
     problemHost.appendChild(
       renderNumberChoices({
         choices: problem.choices,
@@ -240,6 +335,7 @@ export function renderTripScreen(root, ctx, params) {
     const step = progress();
     problemHost = null;
     journeyEl = null;
+    screenEl = null;
     paintProblem();
     setJourneyProgress(journeyEl, step, { instant: true });
   };

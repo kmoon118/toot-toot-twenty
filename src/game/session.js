@@ -52,7 +52,8 @@ export function applyAnswer(session, value) {
     };
   }
   const problem = currentProblem(session);
-  if (value !== problem.sum) {
+  const expected = problem.answer != null ? problem.answer : problem.sum;
+  if (value !== expected) {
     session.missesThisProblem += 1;
     session.hintLevel = nextHintLevel(session.missesThisProblem);
     session.status = `hint${session.hintLevel}`;

@@ -1,7 +1,9 @@
 import { COLLECTIBLES, overlayStamp } from '../../game/collectibles.js';
 import { starsFor } from '../../game/scoring.js';
-import { engineSvg } from '../../ui/Sprite.js';
+import { renderTrainImg } from '../../ui/Sprite.js';
 import { onActivate } from '../input/pointer.js';
+import { sceneryMarkup } from '../../ui/Scenery.js';
+import { burstCelebrate } from '../../ui/Celebrate.js';
 
 export function renderParadeScreen(root, ctx, params) {
   const toots = params.toots || 0;
@@ -13,7 +15,7 @@ export function renderParadeScreen(root, ctx, params) {
   root.innerHTML = '';
   const screen = document.createElement('div');
   screen.className = 'screen';
-  screen.innerHTML = `<div class="sky"></div><div class="sun"></div><div class="hill hill-left"></div><div class="hill hill-right"></div><div class="track"></div>`;
+  screen.innerHTML = sceneryMarkup();
 
   const chrome = document.createElement('div');
   chrome.className = 'chrome';
@@ -35,21 +37,13 @@ export function renderParadeScreen(root, ctx, params) {
   track.className = 'parade-track';
   const train = document.createElement('div');
   train.className = 'parade-train';
-  const engine = document.createElement('div');
-  engine.className = 'car';
-  engine.style.background = '#E85D4C';
-  engine.innerHTML = engineSvg('#E85D4C');
-  train.appendChild(engine);
-  const car = document.createElement('div');
-  car.className = 'car';
-  car.style.background = item.color || '#F4A6C3';
-  car.textContent = latest ? (item.kind === 'animal' ? '🐾' : '★') : '★';
-  if (stamp) {
-    const star = document.createElement('div');
-    star.textContent = '⭐';
-    car.appendChild(star);
+  train.appendChild(renderTrainImg('train-art'));
+  if (stamp || (item && item.kind === 'animal')) {
+    const badge = document.createElement('div');
+    badge.className = 'hint-line';
+    badge.textContent = stamp ? '⭐' : '★';
+    train.appendChild(badge);
   }
-  train.appendChild(car);
   track.appendChild(train);
 
   const banner = document.createElement('div');
@@ -73,6 +67,8 @@ export function renderParadeScreen(root, ctx, params) {
   screen.append(chrome, banner, track, again);
   root.appendChild(screen);
   ctx.audio.playSfx('toot-long');
+  ctx.audio.playSfx('cheer');
+  burstCelebrate(screen, { reduced: ctx.reduceMotion() });
 
   if (ctx.reduceMotion()) {
     window.setTimeout(finish, 2500);

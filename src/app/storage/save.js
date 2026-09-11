@@ -89,7 +89,7 @@ export function resetAll(state, keepMuted = true) {
 
 export function unlockAllRoutes(state) {
   state.mastery.adultUnlockedAll = true;
-  state.mastery.highestRouteUnlocked = 6;
+  state.mastery.highestRouteUnlocked = 11;
   return state;
 }
 

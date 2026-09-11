@@ -1,6 +1,6 @@
 import { renderSprite } from './Sprite.js';
 
-export function renderFrame({ size, packed, frameId = 1, speciesA, speciesB, onTapAnimal }) {
+export function renderFrame({ size, packed, frameId = 1, speciesA, speciesB, onTapAnimal, emptySeats = false }) {
   const frame = document.createElement('div');
   frame.className = `frame size-${size}`;
   frame.setAttribute('role', 'group');
@@ -18,10 +18,13 @@ export function renderFrame({ size, packed, frameId = 1, speciesA, speciesB, onT
       const sprite = renderSprite(species);
       sprite.dataset.countIndex = String(cellIndex + 1);
       cell.appendChild(sprite);
+      if (animal.leaving) cell.classList.add('is-leaving');
       cell.addEventListener('pointerup', (e) => {
         e.stopPropagation();
         onTapAnimal?.(cellIndex + 1, species);
       });
+    } else if (emptySeats) {
+      cell.classList.add('is-empty-seat');
     }
     frame.appendChild(cell);
   }

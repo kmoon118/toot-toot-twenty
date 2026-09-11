@@ -6,7 +6,7 @@ export function renderShedScreen(root, ctx) {
   root.innerHTML = '';
   const screen = document.createElement('div');
   screen.className = 'screen';
-  screen.innerHTML = `<div class="sky"></div>`;
+  screen.innerHTML = `<div class="sky"></div><div class="cloud cloud-a"></div>`;
   const chrome = document.createElement('div');
   chrome.className = 'chrome';
   const title = document.createElement('div');

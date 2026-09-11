@@ -2,7 +2,8 @@
 .sun,
 .hill,
 .cloud,
-.track {
+.track,
+.flower-row {
   pointer-events: none;
   z-index: 0;
 }
@@ -10,53 +11,190 @@
 .sky {
   position: absolute;
   inset: 0;
-  background:
-    radial-gradient(circle at 86% 12%, #ffe27a 0 70px, transparent 72px),
-    linear-gradient(180deg, var(--color-sky) 0%, var(--color-sky-deep) 55%, var(--color-grass) 55%, var(--color-grass-deep) 100%);
+  background: linear-gradient(
+    180deg,
+    var(--color-sky) 0%,
+    var(--color-sky-deep) 52%,
+    var(--color-grass) 52%,
+    var(--color-grass-deep) 100%
+  );
 }
 
 .sun {
   position: absolute;
   top: 18px;
-  right: 28px;
-  width: 92px;
-  height: 92px;
+  right: 96px;
+  width: 88px;
+  height: 88px;
   border-radius: 50%;
-  background: #ffe27a;
-  box-shadow: 0 0 0 10px rgba(255, 226, 122, 0.35);
+  background: #ffe566;
+  border: 5px solid var(--color-ink);
+  box-shadow: 0 0 0 10px rgba(255, 229, 102, 0.35);
 }
 
 .hill {
   position: absolute;
-  bottom: 18%;
-  width: 46%;
+  bottom: 8%;
+  width: 54%;
   height: 28%;
-  background: #5aaa62;
+  background: var(--color-hill);
   border-radius: 50% 50% 0 0;
 }
 
-.hill-left { left: -8%; }
-.hill-right { right: -6%; background: #4e9a55; }
+.hill-left {
+  left: -10%;
+  background: var(--color-hill);
+}
+
+.hill-right {
+  right: -8%;
+  background: var(--color-hill-deep);
+  height: 30%;
+}
 
 .track {
   position: absolute;
   left: 0;
   right: 0;
-  bottom: 14%;
-  height: 10px;
+  bottom: 12%;
+  height: 14px;
   background: repeating-linear-gradient(
     90deg,
     var(--color-track) 0 18px,
     #c9a27a 18px 28px
   );
+  border-top: 3px solid var(--color-ink);
+  border-bottom: 3px solid var(--color-ink);
 }
 
 .cloud {
   position: absolute;
   background: var(--color-cloud);
   border-radius: 40px;
-  opacity: 0.92;
+  border: 4px solid var(--color-ink);
 }
+
+.cloud::before,
+.cloud::after {
+  content: "";
+  position: absolute;
+  background: var(--color-cloud);
+  border: 4px solid var(--color-ink);
+  border-radius: 50%;
+}
+
+.cloud-a {
+  top: 8%;
+  left: 10%;
+  width: 92px;
+  height: 36px;
+}
+
+.cloud-a::before {
+  width: 42px;
+  height: 42px;
+  left: 12px;
+  top: -22px;
+}
+
+.cloud-a::after {
+  width: 34px;
+  height: 34px;
+  right: 16px;
+  top: -16px;
+}
+
+.cloud-b {
+  top: 6%;
+  left: 36%;
+  width: 70px;
+  height: 28px;
+}
+
+.cloud-b::before {
+  width: 32px;
+  height: 32px;
+  left: 8px;
+  top: -16px;
+}
+
+.cloud-b::after {
+  width: 26px;
+  height: 26px;
+  right: 10px;
+  top: -12px;
+}
+
+.cloud-c {
+  top: 28%;
+  right: 6%;
+  left: auto;
+  width: 80px;
+  height: 30px;
+}
+
+[data-layout="stacked"] .sun {
+  width: 52px;
+  height: 52px;
+  top: 10px;
+  right: 78px;
+}
+
+[data-layout="stacked"] .cloud-b,
+[data-layout="stacked"] .cloud-c {
+  display: none;
+}
+
+.cloud-c::before {
+  width: 36px;
+  height: 36px;
+  left: 14px;
+  top: -18px;
+}
+
+.cloud-c::after {
+  width: 28px;
+  height: 28px;
+  right: 12px;
+  top: -12px;
+}
+
+.flower-row {
+  position: absolute;
+  left: 8%;
+  right: 14%;
+  bottom: 18%;
+  height: 28px;
+  display: flex;
+  justify-content: space-around;
+  z-index: 1;
+}
+
+.flower {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 3px solid var(--color-ink);
+  position: relative;
+  background: var(--color-pink);
+}
+
+.flower::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 100%;
+  width: 4px;
+  height: 14px;
+  margin-left: -2px;
+  background: #2e8b57;
+  border-radius: 2px;
+}
+
+.flower.f-yellow { background: #ffe566; }
+.flower.f-blue { background: #7ec8f0; }
+.flower.f-red { background: #e85d4c; }
+.flower.f-pink { background: #f4a6c3; }
 
 .unsupported-card {
   margin: auto;
@@ -67,6 +205,7 @@
   text-align: center;
   box-shadow: var(--shadow-soft);
   font-size: 28px;
+  border: var(--outline);
 }
 
 .screen {
@@ -113,11 +252,12 @@
   font-size: 28px;
   display: grid;
   place-items: center;
+  border: var(--outline);
 }
 
 .chrome-btn:active {
   transform: translateY(3px);
-  box-shadow: 0 4px 0 rgba(43, 43, 43, 0.12);
+  box-shadow: 0 4px 0 rgba(26, 26, 26, 0.12);
 }
 
 [data-layout="wide"] .trip-stage {
@@ -125,6 +265,11 @@
   display: grid;
   grid-template-rows: 1fr auto;
   min-height: 0;
+}
+
+.trip-problem {
+  min-height: 0;
+  overflow: hidden;
 }
 
 [data-layout="stacked"] .trip-stage {

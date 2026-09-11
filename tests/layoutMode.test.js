@@ -41,6 +41,6 @@ describe('useStrip', () => {
         layout: 'wide',
       }),
     ).toBe(true);
-    expect(FRAME_BAND(2)).toBe(132);
+    expect(FRAME_BAND(2)).toBe(180);
   });
 });

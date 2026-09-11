@@ -7,7 +7,7 @@ export const STRIP_GAP = 12;
 export const STRIP_MIN_WIDTH = 7 * 64 + 6 * 12;
 export const STRIP_MIN_HEIGHT = 3 * 64 + 2 * 12;
 export const CHROME_BAND = 64;
-export const FRAME_BAND = (frameCount) => (frameCount === 2 ? 132 : 108);
+export const FRAME_BAND = (frameCount) => (frameCount === 2 ? 180 : 140);
 
 export function computeLayout(width, height) {
   if (width < 360) return 'unsupported';
